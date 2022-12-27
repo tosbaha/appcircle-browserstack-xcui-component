@@ -38,7 +38,6 @@ def post(payload, endpoint, username, access_key)
   uri = URI.parse("#{BROWSERSTACK_DOMAIN}#{endpoint}")
   req = Net::HTTP::Post.new(uri.request_uri, 'Content-Type' => 'application/json')
   req.body = payload
-  puts req.body
   req.basic_auth(username, access_key)
   res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
     http.request(req)
@@ -87,6 +86,7 @@ def check_status(build_id, test_timeout, username, access_key)
     end
   else
     puts('Test plan is still running...')
+    STDOUT.flush
     sleep(10)
     check_status(build_id, test_timeout - 10, username, access_key)
     true
@@ -108,11 +108,14 @@ test_timeout = env_has_key('AC_BROWSERSTACK_TIMEOUT').to_i
 payload = env_has_key('AC_BROWSERSTACK_PAYLOAD')
 
 puts "Uploading IPA #{ipa_path}"
+STDOUT.flush
 app_url = upload(ipa_path, APP_UPLOAD_ENDPOINT, username, access_key)[:app_url]
 puts "App uploaded. #{app_url}"
 puts "Uploading Test Runner #{runner_zip}"
+STDOUT.flush
 test_suite_url = upload(runner_zip, TEST_SUITE_UPLOAD_ENDPOINT, username, access_key)[:test_suite_url]
 puts "Test uploaded. #{test_suite_url}"
 puts 'Starting a build'
+STDOUT.flush
 build_id = build(payload, app_url, test_suite_url, username, access_key)
 check_status(build_id, test_timeout, username, access_key)
